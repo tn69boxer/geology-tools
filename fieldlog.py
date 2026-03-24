@@ -1,16 +1,17 @@
 import csv
 import sys
+import os
 import platform
 from datetime import datetime
 
 LOG_FILE = "field_samples.csv"
 
 def get_gps():
+    if os.environ.get("TERMUX_VERSION"):
+        return get_gps_termux()
     os_name = platform.system()
     if os_name == "Linux" or os_name == "Darwin":
         return get_gps_gpsd()
-    elif os_name == "Android":
-        return get_gps_termux()
     else:
         return get_gps_ip()
 
@@ -112,28 +113,3 @@ elif sys.argv[1] == "summary":
     summary()
 else:
     print("Unknown command. Use: add, view, summary")
-
-def view_logs():
-    try:
-        with open(LOG_FILE, "r") as f:
-            reader = csv.reader(f)
-            for row in reader:
-                print(f"{row[0]} {row[1]} | {row[2]} | {row[3]}, {row[4]} | {row[6]} | {row[5]}")
-    except FileNotFoundError:
-        print("No samples logged yet.")
-
-def summary():
-    totals = {}
-    try:
-        with open(LOG_FILE, "r") as f:
-            reader = csv.reaader(f)
-            for row in reader:
-                source = row[6]
-                totals[source] = totals.get(source, 0) + 1
-        total_samples =sum(totals.values())
-        print(f"--- Summary ---")
-        print(f"Total samples: {total_samples}")
-        for source, count in totals.items():
-            print(f"  {source}: {count} samples")
-    except FileNotFoundError:
-        print("No samples logged yet.")
